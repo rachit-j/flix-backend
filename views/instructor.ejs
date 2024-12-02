@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instructor Panel</title>
+  <script defer src="/scripts/instructor.js"></script>
+</head>
+<body>
+  <h1>Instructor Panel</h1>
+  <h2>Filter Submissions</h2>
+  <select id="assignmentDropdown"></select>
+  <button id="filterSubmissions">Filter</button>
+  <h2>Grade Submissions</h2>
+  <table border="1">
+    <thead>
+      <tr>
+        <th>Assignment</th>
+        <th>Student</th>
+        <th>Submission</th>
+        <th>Grade</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="submissionsTableBody"></tbody>
+  </table>
+</body>
+</html>

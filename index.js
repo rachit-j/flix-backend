@@ -15,6 +15,11 @@ app.set("view engine", "ejs");
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
+const path = require("path");
+
+// Serve static files (e.g., JS, CSS) from the 'public' directory
+app.use(express.static(path.join(__dirname, "public")));
+
 const SECRET_KEY = "your_secret_key"; // Replace with a strong secret key in production
 
 // Initialize SQLite Database
@@ -105,51 +110,43 @@ function authorize(role) {
 }
 
 // Login Endpoint
-app.post("/login", (req, res) => {
-    console.log("Request Body:", req.body); // Debug request body
+app.post('/login', (req, res) => {
     const { username, password } = req.body;
   
     if (!username || !password) {
-      console.error("Username or password missing in request");
-      return res.render("login", { error: "Please provide both username and password" });
+      return res.status(400).json({ error: 'Please provide both username and password' });
     }
   
     db.get(`SELECT * FROM users WHERE username = ?`, [username], (err, user) => {
       if (err) {
-        console.error("Database error:", err.message);
-        return res.render("login", { error: "An error occurred. Please try again." });
+        console.error('Database error:', err.message);
+        return res.status(500).json({ error: 'An internal error occurred' });
       }
   
       if (!user) {
-        console.log("Login failed: User not found.");
-        return res.render("login", { error: "Invalid username or password" });
+        return res.status(401).json({ error: 'Invalid username or password' });
       }
   
-      console.log("Stored user record:", user);
-  
-      bcrypt.compare(password, user.password, (err, result) => {
+      bcrypt.compare(password, user.password, (err, isMatch) => {
         if (err) {
-          console.error("Error during password comparison:", err.message);
-          return res.render("login", { error: "An error occurred. Please try again." });
+          console.error('Error during password comparison:', err.message);
+          return res.status(500).json({ error: 'An internal error occurred' });
         }
   
-        console.log("Password comparison result:", result);
-        if (!result) {
-          return res.render("login", { error: "Invalid username or password" });
+        if (!isMatch) {
+          return res.status(401).json({ error: 'Invalid username or password' });
         }
   
         const token = jwt.sign(
           { id: user.id, username: user.username, role: user.role },
           SECRET_KEY,
-          { expiresIn: "1h" }
+          { expiresIn: '1h' }
         );
   
-        res.cookie("authToken", token, { httpOnly: true });
-        if (user.role === "admin") {
-          res.redirect("/admin");
-        } else {
-          res.redirect("/dashboard");
-        }
+        res.cookie('authToken', token, { httpOnly: true });
+  
+        // Respond with user role for frontend redirection
+        res.json({ role: user.role });
       });
     });
   });
@@ -194,6 +191,24 @@ app.get("/admin", authenticate, authorize("admin"), (req, res) => {
         });
       });
     });
+  });
+
+// Student Dashboard
+app.get('/student', authenticate, authorize('student'), (req, res) => {
+    db.all(
+      `SELECT submissions.*, assignments.title AS assignment_title 
+       FROM submissions 
+       JOIN assignments ON submissions.assignment_id = assignments.id 
+       WHERE submissions.user_id = ?`,
+      [req.user.id],
+      (err, submissions) => {
+        if (err) {
+          console.error('Error fetching student dashboard:', err.message);
+          return res.status(500).send('Error fetching dashboard');
+        }
+        res.render('student', { submissions });
+      }
+    );
   });
 
 // Submissions Endpoint
@@ -397,6 +412,150 @@ app.get("/admin/export", authenticate, authorize("admin"), (req, res) => {
       res.json({ users });
     });
   });
+
+// Routes for Panels
+app.get("/admin", authenticate, authorize("admin"), (req, res) => {
+    res.render("admin");
+  });
+  
+  app.get("/instructor", authenticate, authorize("instructor"), (req, res) => {
+    res.render("instructor");
+  });
+  
+  app.get("/dashboard", authenticate, authorize("student"), (req, res) => {
+    res.render("dashboard");
+  });
+  
+  // Route for Login
+  app.get("/login", (req, res) => {
+    res.render("login");
+  });
+
+
+// Fetch assignments for instructors
+app.get('/instructor/assignments', authenticate, authorize('instructor'), (req, res) => {
+    const query = `
+      SELECT * 
+      FROM assignments 
+      WHERE course IN (
+        SELECT course 
+        FROM users 
+        WHERE id = ?
+      )
+    `;
+  
+    db.all(query, [req.user.id], (err, rows) => {
+      if (err) {
+        console.error('Error fetching assignments for instructor:', err.message);
+        return res.status(500).json({ error: 'Failed to fetch assignments' });
+      }
+      res.json(rows);
+    });
+  });
+
+  app.get('/instructor/submissions', authenticate, authorize('instructor'), (req, res) => {
+  const { assignmentId } = req.query;
+
+  const query = assignmentId
+    ? `SELECT submissions.*, users.username, assignments.title
+       FROM submissions
+       JOIN users ON submissions.user_id = users.id
+       JOIN assignments ON submissions.assignment_id = assignments.id
+       WHERE assignments.id = ? AND assignments.course IN (
+         SELECT course 
+         FROM users 
+         WHERE id = ?
+       )`
+    : `SELECT submissions.*, users.username, assignments.title
+       FROM submissions
+       JOIN users ON submissions.user_id = users.id
+       JOIN assignments ON submissions.assignment_id = assignments.id
+       WHERE assignments.course IN (
+         SELECT course 
+         FROM users 
+         WHERE id = ?
+       )`;
+
+  const params = assignmentId ? [assignmentId, req.user.id] : [req.user.id];
+  db.all(query, params, (err, rows) => {
+    if (err) {
+      console.error('Error fetching submissions:', err.message);
+      return res.status(500).json({ error: 'Failed to fetch submissions' });
+    }
+    res.json(rows);
+  });
+});
+  
+  // Grade Submission
+  app.patch('/instructor/grade/:id', authenticate, authorize('instructor'), (req, res) => {
+    const { id } = req.params;
+    const { graded, grade } = req.body;
+  
+    db.run(
+      `UPDATE submissions SET graded = ?, grade = ? WHERE id = ?`,
+      [graded, grade, id],
+      (err) => {
+        if (err) {
+          console.error('Error grading submission:', err.message);
+          return res.status(500).json({ error: 'Failed to grade submission' });
+        }
+        res.json({ message: 'Submission graded successfully' });
+      }
+    );
+  });
+
+// Fetch assignments for students
+app.get('/dashboard/assignments', authenticate, authorize('student'), (req, res) => {
+    const query = `
+      SELECT * FROM assignments 
+      WHERE course IN (SELECT course FROM users WHERE id = ?)
+    `;
+  
+    db.all(query, [req.user.id], (err, rows) => {
+      if (err) {
+        console.error('Error fetching assignments:', err.message);
+        return res.status(500).json({ error: 'Failed to fetch assignments' });
+      }
+      res.json(rows);
+    });
+  });
+
+// Submit code for an assignment
+app.post('/dashboard/submit', authenticate, authorize('student'), (req, res) => {
+    const { assignment_id, code } = req.body;
+  
+    // Insert submission
+    db.run(
+      `INSERT INTO submissions (assignment_id, user_id, code) VALUES (?, ?, ?)`,
+      [assignment_id, req.user.id, code],
+      (err) => {
+        if (err) {
+          console.error('Error submitting code:', err.message);
+          return res.status(500).json({ error: 'Failed to submit assignment' });
+        }
+        res.json({ message: 'Assignment submitted successfully' });
+      }
+    );
+  });
+
+// View all submissions for the student
+app.get('/dashboard/submissions', authenticate, authorize('student'), (req, res) => {
+    const query = `
+      SELECT submissions.*, assignments.title
+      FROM submissions
+      JOIN assignments ON submissions.assignment_id = assignments.id
+      WHERE submissions.user_id = ?
+    `;
+  
+    db.all(query, [req.user.id], (err, rows) => {
+      if (err) {
+        console.error('Error fetching submissions:', err.message);
+        return res.status(500).json({ error: 'Failed to fetch submissions' });
+      }
+      res.json(rows);
+    });
+  });
+
 
 // Start the server
 const PORT = process.env.PORT || 3000;
