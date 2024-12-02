@@ -556,6 +556,96 @@ app.get('/dashboard/submissions', authenticate, authorize('student'), (req, res)
     });
   });
 
+// Check if student has already submitted an assignment
+app.get('/dashboard/assignments/status', authenticate, (req, res) => {
+    const { assignmentId } = req.query;
+  
+    const query = `
+      SELECT id FROM submissions 
+      WHERE assignment_id = ? AND user_id = ?
+    `;
+  
+    db.get(query, [assignmentId, req.user.id], (err, submission) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error checking submission status' });
+      }
+      res.json({ submitted: !!submission });
+    });
+  });
+
+// Create an assignment (instructor only)
+app.post('/instructor/assignments', authenticate, authorize('instructor'), (req, res) => {
+    const { title, course } = req.body;
+    
+    db.run(
+      `INSERT INTO assignments (title, course, locked) VALUES (?, ?, ?)`,
+      [title, course, 0],
+      (err) => {
+        if (err) {
+          console.error('Error creating assignment:', err.message);
+          return res.status(500).json({ error: 'Failed to create assignment' });
+        }
+        res.json({ message: 'Assignment created successfully' });
+      }
+    );
+  });
+
+// Get submission status for each student (Instructor)
+app.get('/instructor/assignments/:id/status', authenticate, authorize('instructor'), (req, res) => {
+    const assignmentId = req.params.id;
+  
+    const query = `
+      SELECT users.username, 
+             CASE 
+               WHEN submissions.id IS NOT NULL THEN 'Submitted'
+               ELSE 'Not Submitted'
+             END AS submission_status
+      FROM users
+      LEFT JOIN submissions ON submissions.user_id = users.id AND submissions.assignment_id = ?
+      WHERE users.role = 'student'
+    `;
+  
+    db.all(query, [assignmentId], (err, rows) => {
+      if (err) {
+        console.error('Error fetching submission status:', err.message);
+        return res.status(500).json({ error: 'Failed to fetch submission status' });
+      }
+      res.json(rows); // Return a list of students with their submission status
+    });
+  });
+
+  // Lock an assignment (instructor/admin only)
+app.patch('/admin/assignments/lock/:id', authenticate, authorize('admin', 'instructor'), (req, res) => {
+    const { id } = req.params;
+  
+    db.run(
+      `UPDATE assignments SET locked = 1 WHERE id = ?`,
+      [id],
+      (err) => {
+        if (err) {
+          console.error('Error locking assignment:', err.message);
+          return res.status(500).json({ error: 'Failed to lock assignment' });
+        }
+        res.json({ message: 'Assignment locked successfully' });
+      }
+    );
+  });
+
+  app.patch('/instructor/assignments/lock/:id', authenticate, authorize('admin', 'instructor'), (req, res) => {
+    const { id } = req.params;
+  
+    db.run(
+      `UPDATE assignments SET locked = 1 WHERE id = ?`,
+      [id],
+      (err) => {
+        if (err) {
+          console.error('Error locking assignment:', err.message);
+          return res.status(500).json({ error: 'Failed to lock assignment' });
+        }
+        res.json({ message: 'Assignment locked successfully' });
+      }
+    );
+  });
 
 // Start the server
 const PORT = process.env.PORT || 3000;

@@ -4,31 +4,41 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Dashboard</title>
+  <link rel="stylesheet" href="/styles.css">
   <script defer src="/scripts/student.js"></script>
 </head>
 <body>
-  <h1>Student Dashboard</h1>
-  <h2>Assignments</h2>
-  <table border="1">
-    <thead>
-      <tr>
-        <th>Title</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="assignmentsTableBody"></tbody>
-  </table>
+  <div class="container">
+    <h1>Student Dashboard</h1>
+    
+    <!-- Assignments Section -->
+    <section>
+      <h2>Assignments</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="assignmentsTableBody"></tbody>
+      </table>
+    </section>
 
-  <h2>Your Submissions</h2>
-  <table border="1">
-    <thead>
-      <tr>
-        <th>Assignment</th>
-        <th>Code</th>
-        <th>Grade</th>
-      </tr>
-    </thead>
-    <tbody id="submissionsTableBody"></tbody>
-  </table>
+    <!-- Submissions Section -->
+    <section>
+      <h2>Your Submissions</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Assignment</th>
+            <th>Code</th>
+            <th>Grade</th>
+          </tr>
+        </thead>
+        <tbody id="submissionsTableBody"></tbody>
+      </table>
+    </section>
+  </div>
 </body>
 </html>

@@ -1,3 +1,4 @@
+// Fetch Submissions
 async function fetchSubmissions() {
   try {
     const response = await fetch('/instructor/submissions');
@@ -29,6 +30,7 @@ async function fetchSubmissions() {
   }
 }
 
+// Grade Submission
 async function gradeSubmission(submissionId) {
   const gradeInput = document.getElementById(`grade-${submissionId}`);
   const grade = gradeInput.value.trim();
@@ -57,6 +59,7 @@ async function gradeSubmission(submissionId) {
   }
 }
 
+// Fetch Assignments
 async function fetchAssignments() {
   try {
     const response = await fetch('/instructor/assignments');
@@ -79,6 +82,7 @@ async function fetchAssignments() {
   }
 }
 
+// Fetch Filtered Submissions
 async function fetchFilteredSubmissions() {
   const assignmentId = document.getElementById('assignmentDropdown').value;
   if (!assignmentId) {
@@ -116,9 +120,96 @@ async function fetchFilteredSubmissions() {
   }
 }
 
+// Create New Assignment
+async function createAssignment(event) {
+  event.preventDefault();
+
+  const title = document.getElementById('assignmentTitle').value;
+  const course = document.getElementById('assignmentCourse').value;
+
+  try {
+    const response = await fetch('/instructor/assignments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, course }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create assignment');
+    }
+
+    alert('Assignment created successfully');
+    fetchAssignments(); // Refresh the assignments list
+  } catch (error) {
+    console.error('Error creating assignment:', error);
+    alert('An error occurred while creating the assignment.');
+  }
+}
+
+// Lock Assignment
+async function lockAssignment() {
+  const assignmentId = document.getElementById('assignmentDropdown').value;
+
+  if (!assignmentId) {
+    alert('Please select an assignment to lock.');
+    return;
+  }
+
+  try {
+    const response = await fetch(`/instructor/assignments/lock/${assignmentId}`, {
+      method: 'PATCH',
+    });
+
+    if (response.ok) {
+      alert('Assignment locked successfully');
+    } else {
+      alert('Error locking assignment');
+    }
+  } catch (error) {
+    console.error('Error locking assignment:', error);
+    alert('An error occurred while locking the assignment.');
+  }
+}
+
+// Fetch Submission Status for Each Student
+async function fetchSubmissionStatus() {
+  const assignmentId = document.getElementById('assignmentDropdown').value;
+
+  if (!assignmentId) {
+    alert('Please select an assignment to see submission statuses.');
+    return;
+  }
+
+  try {
+    const response = await fetch(`/instructor/assignments/${assignmentId}/status`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch submission status');
+    }
+
+    const students = await response.json();
+    const submissionStatusTableBody = document.getElementById('submissionStatusTableBody');
+    submissionStatusTableBody.innerHTML = '';
+
+    students.forEach((student) => {
+      submissionStatusTableBody.innerHTML += `
+        <tr>
+          <td>${student.username}</td>
+          <td>${student.submission_status}</td>
+        </tr>
+      `;
+    });
+  } catch (error) {
+    console.error('Error fetching submission status:', error);
+    alert('An error occurred while fetching submission status.');
+  }
+}
+
+
+// Event Listeners
 document.addEventListener('DOMContentLoaded', () => {
   fetchAssignments();
   fetchSubmissions();
 
   document.getElementById('filterSubmissions').addEventListener('click', fetchFilteredSubmissions);
+  document.getElementById('createAssignmentForm').addEventListener('submit', createAssignment);
 });

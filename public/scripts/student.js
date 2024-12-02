@@ -10,17 +10,32 @@ async function fetchAssignments() {
       const assignmentsTableBody = document.getElementById('assignmentsTableBody');
       assignmentsTableBody.innerHTML = '';
   
-      assignments.forEach((assignment) => {
+      // Use a for...of loop to handle async/await correctly
+      for (const assignment of assignments) {
+        const isSubmitted = await checkIfSubmitted(assignment.id); // Check if already submitted
+        const buttonText = isSubmitted ? "Resubmit" : "Submit";
+        
         assignmentsTableBody.innerHTML += `
           <tr>
             <td>${assignment.title}</td>
-            <td><button onclick="submitAssignment(${assignment.id})">Submit</button></td>
+            <td><button onclick="submitAssignment(${assignment.id})">${buttonText}</button></td>
           </tr>
         `;
-      });
+      }
     } catch (error) {
       console.error('Error fetching assignments:', error);
       alert('An error occurred while fetching assignments.');
+    }
+  }
+  
+  async function checkIfSubmitted(assignmentId) {
+    try {
+      const response = await fetch(`/dashboard/assignments/status?assignmentId=${assignmentId}`);
+      const data = await response.json();
+      return data.submitted;
+    } catch (error) {
+      console.error('Error checking submission status:', error);
+      return false;
     }
   }
   

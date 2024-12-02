@@ -4,50 +4,61 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel</title>
+  <link rel="stylesheet" href="/styles.css">
   <script src="/scripts/admin.js" defer></script>
 </head>
 <body>
-  <h1>Admin Panel</h1>
-  <h2>Manage Users</h2>
-  <form id="createUserForm">
-    <input id="username" placeholder="Username" required />
-    <input id="password" placeholder="Password" required />
-    <select id="role">
-      <option value="student">Student</option>
-      <option value="instructor">Instructor</option>
-      <option value="admin">Admin</option>
-    </select>
-    <input id="course" placeholder="Course (optional)" />
-    <button type="submit">Create User</button>
-  </form>
-  <table border="1">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Username</th>
-        <th>Role</th>
-        <th>Course</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="userTableBody"></tbody>
-  </table>
-  <h2>Manage Assignments</h2>
-  <form id="createAssignmentForm">
-    <input id="assignmentTitle" placeholder="Title" required />
-    <input id="assignmentCourse" placeholder="Course" required />
-    <button type="submit">Create Assignment</button>
-  </form>
-  <table border="1">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Title</th>
-        <th>Course</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="assignmentTableBody"></tbody>
-  </table>
+  <div class="container">
+    <h1>Admin Panel</h1>
+
+    <!-- User Management -->
+    <section>
+      <h2>Manage Users</h2>
+      <form id="createUserForm" class="form">
+        <input id="username" placeholder="Username" required />
+        <input id="password" placeholder="Password" required type="password" />
+        <select id="role">
+          <option value="student">Student</option>
+          <option value="instructor">Instructor</option>
+          <option value="admin">Admin</option>
+        </select>
+        <input id="course" placeholder="Course (optional)" />
+        <button type="submit">Create User</button>
+      </form>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Course</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody"></tbody>
+      </table>
+    </section>
+
+    <!-- Assignment Management -->
+    <section>
+      <h2>Manage Assignments</h2>
+      <form id="createAssignmentForm" class="form">
+        <input id="assignmentTitle" placeholder="Title" required />
+        <input id="assignmentCourse" placeholder="Course" required />
+        <button type="submit">Create Assignment</button>
+      </form>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Course</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="assignmentTableBody"></tbody>
+      </table>
+    </section>
+  </div>
 </body>
 </html>
