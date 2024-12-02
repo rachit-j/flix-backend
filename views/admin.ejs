@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #f1f1f1;
+    }
+    form {
+      margin: 20px 0;
+      padding: 10px;
+      background-color: #f9f9f9;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+    form label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+    form input, form select, form button {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    form button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    form button:hover {
+      background-color: #0056b3;
+    }
+    .section {
+      margin-bottom: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Dashboard</h1>
+
+  <!-- User Management Section -->
+  <div class="section">
+    <h2>User Management</h2>
+    <form id="add-user-form" method="POST" action="/admin/users">
+      <h3>Add New User</h3>
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" placeholder="Enter username" required>
+
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Enter password" required>
+
+      <label for="role">Role</label>
+      <select id="role" name="role" required>
+        <option value="student">Student</option>
+        <option value="instructor">Instructor</option>
+        <option value="admin">Admin</option>
+      </select>
+
+      <label for="course">Course (optional)</label>
+      <input type="text" id="course" name="course" placeholder="Enter course">
+
+      <button type="submit">Add User</button>
+    </form>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Username</th>
+          <th>Role</th>
+          <th>Course</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(user => { %>
+          <tr>
+            <td><%= user.id %></td>
+            <td><%= user.username %></td>
+            <td><%= user.role %></td>
+            <td><%= user.course %></td>
+            <td>
+              <form method="POST" action="/admin/users/<%= user.id %>?_method=DELETE" style="display:inline;">
+                <button type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Assignment Management Section -->
+  <div class="section">
+    <h2>Assignments</h2>
+    <form id="add-assignment-form" method="POST" action="/admin/assignments">
+      <h3>Add New Assignment</h3>
+      <label for="title">Title</label>
+      <input type="text" id="title" name="title" placeholder="Enter title" required>
+
+      <label for="course">Course</label>
+      <input type="text" id="course" name="course" placeholder="Enter course" required>
+
+      <button type="submit">Add Assignment</button>
+    </form>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Course</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% assignments.forEach(assignment => { %>
+          <tr>
+            <td><%= assignment.id %></td>
+            <td><%= assignment.title %></td>
+            <td><%= assignment.course %></td>
+            <td>
+              <form method="POST" action="/admin/assignments/<%= assignment.id %>?_method=DELETE" style="display:inline;">
+                <button type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Submissions Section -->
+  <div class="section">
+    <h2>Submissions</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Assignment</th>
+          <th>Student</th>
+          <th>Code</th>
+          <th>Graded</th>
+          <th>Grade</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% submissions.forEach(submission => { %>
+          <tr>
+            <td><%= submission.id %></td>
+            <td><%= submission.title %></td>
+            <td><%= submission.username %></td>
+            <td><pre><%= submission.code %></pre></td>
+            <td><%= submission.graded ? 'Yes' : 'No' %></td>
+            <td><%= submission.grade || 'N/A' %></td>
+            <td>
+              <form method="POST" action="/admin/submissions/<%= submission.id %>?_method=PATCH" style="display:inline;">
+                <label for="grade">Grade:</label>
+                <input type="text" name="grade" placeholder="Enter grade">
+                <button type="submit">Grade</button>
+              </form>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Database Controls Section -->
+  <div class="section">
+    <h2>Database Controls</h2>
+    <form method="GET" action="/admin/export">
+      <button type="submit">Export Data</button>
+    </form>
+    <form method="POST" action="/admin/reset?_method=DELETE">
+      <button type="submit">Reset Tables</button>
+    </form>
+  </div>
+</body>
+</html>
