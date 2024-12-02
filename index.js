@@ -651,6 +651,11 @@ app.patch('/admin/assignments/lock/:id', authenticate, authorize('admin', 'instr
     );
   });
 
+// Redirect root path (/) to the login page
+app.get('/', (req, res) => {
+  res.redirect('/login');  // Redirect to the login page
+});
+
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
