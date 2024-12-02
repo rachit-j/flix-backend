@@ -1,3 +1,6 @@
+// Add this at the top of your index.js to load environment variables from .env
+require('dotenv').config(); // Load the .env file
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -20,7 +23,9 @@ const path = require("path");
 // Serve static files (e.g., JS, CSS) from the 'public' directory
 app.use(express.static(path.join(__dirname, "public")));
 
-const SECRET_KEY = "your_secret_key"; // Replace with a strong secret key in production
+// Use the secret key and root password from .env
+const SECRET_KEY = process.env.SECRET_KEY || "your_secret_key";  // Using .env for secret key
+const ROOT_PASSWORD = process.env.ROOT_PASSWORD; // Use the root password from the .env file
 
 // Initialize SQLite Database
 const db = new sqlite3.Database("./database.sqlite", (err) => {
@@ -62,8 +67,7 @@ const db = new sqlite3.Database("./database.sqlite", (err) => {
     console.log("Tables created or verified");
 
     // Add default admin if not exists
-    const defaultAdminPassword = "FoodIsGood";
-    bcrypt.hash(defaultAdminPassword, 10, (err, hash) => {
+    bcrypt.hash(ROOT_PASSWORD, 10, (err, hash) => {
       if (err) {
         console.error("Error hashing password:", err.message);
       } else {
